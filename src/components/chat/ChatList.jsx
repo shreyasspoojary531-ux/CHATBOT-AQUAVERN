@@ -1,59 +1,64 @@
 import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
+import { CheckCheck } from "lucide-react";
+import { cn } from "../../lib/utils";
 
-export default function ChatList({ chats, selectedChat, onSelectChat }) {
+export default function ChatList({ chats, activeChatId, onSelectChat, compact = false }) {
   return (
-    <section className="h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-[0_0_60px_rgba(255,255,255,0.03)] backdrop-blur-2xl">
-      <div className="flex h-full flex-col">
-        <div className="pb-6">
-          <div className="flex items-center justify-between gap-5">
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">Aquavern</p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-white/90 md:text-2xl">Private Chats</h2>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-[0_0_40px_rgba(255,255,255,0.03)]">
-              <MessageCircle className="h-5 w-5 text-white/55" />
-            </div>
-          </div>
+    <section className="glass-panel flex min-h-[32rem] flex-col rounded-lg">
+      <div className="border-b border-white/10 p-4">
+        <p className="text-xs uppercase tracking-[0.24em] text-white/35">Private Chats</p>
+        <div className="mt-2 flex items-end justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-white">{compact ? "Threads" : "Private Chats"}</h1>
+          <span className="rounded-md border border-white/10 px-2 py-1 text-xs text-white/45">
+            {chats.length} active
+          </span>
         </div>
+      </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto">
-          {chats.map((chat, index) => (
+      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+        {chats.map((chat, index) => {
+          const active = chat.id === activeChatId;
+
+          return (
             <motion.button
               key={chat.id}
-              onClick={() => onSelectChat(chat)}
-              className={`group flex w-full items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-300 ${
-                selectedChat?.id === chat.id
-                  ? "border-white/[0.18] bg-white/[0.08] shadow-[0_20px_80px_rgba(255,255,255,0.06)]"
-                  : "border-white/10 bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.055] hover:shadow-[0_20px_70px_rgba(255,255,255,0.04)]"
-              }`}
-              initial={{ opacity: 0, y: 14 }}
+              type="button"
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ y: -3, scale: 1.01 }}
+              transition={{ delay: index * 0.08, duration: 0.35 }}
+              whileHover={{ y: -2 }}
+              onClick={() => onSelectChat(chat)}
+              className={cn(
+                "group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all duration-300",
+                active
+                  ? "border-white/25 bg-white/[0.11] shadow-[0_18px_54px_rgba(0,0,0,0.4)]"
+                  : "border-white/8 bg-white/[0.035] hover:border-white/18 hover:bg-white/[0.07]"
+              )}
             >
-              <div className="flex min-w-0 items-center gap-4">
-                <div className="relative">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-white/80 md:h-14 md:w-14">
-                    {chat.initials}
-                  </div>
-                  {chat.unread > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-black bg-white text-xs font-semibold text-black">
-                      {chat.unread}
-                    </span>
-                  )}
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white text-sm font-semibold text-black">
+                {chat.initials}
+                <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-black bg-white" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="truncate text-sm font-semibold text-white">{chat.name}</p>
+                  <span className="text-xs text-white/40">{chat.timestamp}</span>
                 </div>
-                <div className="min-w-0">
-                  <div className="mb-1.5">
-                    <span className="truncate text-sm font-semibold text-white/90 md:text-base">{chat.name}</span>
-                  </div>
-                  <p className="truncate text-sm leading-relaxed text-zinc-400 md:text-base">{chat.lastMessage}</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <CheckCheck className="h-3.5 w-3.5 shrink-0 text-white/35" />
+                  <p className="truncate text-sm text-white/48">{chat.lastMessage}</p>
                 </div>
               </div>
-              <span className="ml-4 shrink-0 self-start pt-1 text-xs text-zinc-500">{chat.timestamp}</span>
+
+              {chat.unread > 0 && (
+                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-2 text-xs font-semibold text-black">
+                  {chat.unread}
+                </span>
+              )}
             </motion.button>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </section>
   );

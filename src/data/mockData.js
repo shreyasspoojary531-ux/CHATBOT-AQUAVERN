@@ -1,52 +1,74 @@
-export const mockChats = [
+export const privateChats = [
   {
-    id: 1,
-    name: "Alex Chen",
-    initials: "AC",
-    lastMessage: "Sure, I'll send the files by evening",
-    timestamp: "2:34 PM",
+    id: "ops-room",
+    name: "Mira Kapoor",
+    role: "Operations Lead",
+    initials: "MK",
+    lastMessage: "Can you confirm the Aquavern rollout window?",
+    timestamp: "09:42",
+    status: "Online",
     unread: 2,
     messages: [
-      { id: 1, sender: "them", text: "Hey! Did you get a chance to review the project specs?", time: "10:30 AM" },
-      { id: 2, sender: "me", text: "Yes, I went through them. Looks good!", time: "10:45 AM" },
-      { id: 3, sender: "them", text: "Great! I have some ideas for the UI improvements.", time: "11:00 AM" },
-      { id: 4, sender: "me", text: "Really? I'd love to hear them.", time: "11:15 AM" },
-      { id: 5, sender: "them", text: "So I was thinking we could add some animations to the landing page...", time: "11:30 AM" },
-      { id: 6, sender: "me", text: "That sounds like a great idea. Let's discuss in detail.", time: "12:00 PM" },
-      { id: 7, sender: "them", text: "Sure, I'll send the files by evening", time: "2:34 PM" },
-    ]
-  }
+      {
+        id: 1,
+        sender: "Mira Kapoor",
+        text: "Morning. Can you confirm the Aquavern rollout window?",
+        timestamp: "09:36",
+        direction: "incoming",
+      },
+      {
+        id: 2,
+        sender: "You",
+        text: "Targeting the quiet slot after the internal sync.",
+        timestamp: "09:38",
+        direction: "outgoing",
+      },
+      {
+        id: 3,
+        sender: "Mira Kapoor",
+        text: "Perfect. I will keep the notifications channel warm.",
+        timestamp: "09:42",
+        direction: "incoming",
+      },
+    ],
+  },
 ];
 
-export const mockNotifications = [
+export const notifications = [
   {
     id: 1,
-    title: "New message from Alex",
-    description: "Sent you the project files",
-    time: "2 minutes ago",
-    unread: true
+    title: "Workspace sync complete",
+    body: "Private chat indexes refreshed across internal rooms.",
+    time: "2m ago",
   },
   {
     id: 2,
-    title: "Sarah accepted your invite",
-    description: "Joined the design review meeting",
-    time: "1 hour ago",
-    unread: true
+    title: "Policy update queued",
+    body: "New moderation copy is pending review for Aquavern.",
+    time: "18m ago",
   },
   {
     id: 3,
-    title: "System update",
-    description: "New features available in dashboard",
-    time: "3 hours ago",
-    unread: false
+    title: "Chatbot UI preview",
+    body: "Default AI response flow is ready for stakeholder testing.",
+    time: "41m ago",
   },
   {
     id: 4,
-    title: "Meeting reminder",
-    description: "Standup in 30 minutes",
-    time: "Yesterday",
-    unread: false
+    title: "Quiet hours active",
+    body: "Non-critical notifications are being bundled.",
+    time: "1h ago",
   },
 ];
 
-export const defaultBotResponse = "Message received. Aquavern AI processing will be connected soon.";
+export const chatbotStarterMessages = [
+  {
+    id: "system-1",
+    role: "assistant",
+    content: "Aquavern interface is online. Send a message to preview the response flow.",
+    timestamp: "Ready",
+  },
+];
+
+export const defaultBotReply =
+  "Message received. Aquavern Intelligence is processing your request in simulation mode.";

@@ -1,24 +1,38 @@
 import { motion } from "framer-motion";
-import ChatWindow from "../components/chat/ChatWindow";
+import ChatInterface from "../components/chat/ChatInterface";
 import NotificationPanel from "../components/notifications/NotificationPanel";
-import { mockChats, mockNotifications } from "../data/mockData";
 
 export default function Home() {
   return (
-    <motion.main
-      className="relative z-10 mx-auto max-w-[1600px] px-6 py-6 md:px-10 lg:px-14 xl:px-20"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 xl:gap-8">
-        <div className="min-w-0 lg:col-span-8">
-          <ChatWindow chats={mockChats} />
-        </div>
-        <div className="min-w-0 lg:col-span-4">
-          <NotificationPanel notifications={mockNotifications} />
-        </div>
+    <div className="space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="flex flex-col gap-2"
+      >
+        <p className="text-xs uppercase tracking-[0.28em] text-white/35">Aquavern Home</p>
+        <h1 className="text-3xl font-semibold text-white sm:text-4xl">Internal conversation desk</h1>
+      </motion.div>
+
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.36 }}
+          className="min-w-0 lg:basis-[70%]"
+        >
+          <ChatInterface />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14, duration: 0.36 }}
+          className="min-w-0 lg:basis-[30%]"
+        >
+          <NotificationPanel />
+        </motion.div>
       </div>
-    </motion.main>
+    </div>
   );
 }

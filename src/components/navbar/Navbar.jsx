@@ -1,55 +1,59 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageSquare } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
+import { cn } from "../../lib/utils";
+
+const links = [
+  { label: "Home", to: "/" },
+  { label: "Chatbot", to: "/chatbot" },
+];
 
 export default function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 flex h-[72px] w-full items-center border-b border-white/[0.06] bg-black/20 backdrop-blur-xl">
-      <div className="mx-auto w-full max-w-[1600px] px-6 md:px-10 lg:px-14 xl:px-20">
-        <div className="flex h-14 items-center justify-between rounded-2xl border border-white/10 bg-black/40 px-4 shadow-[0_18px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl md:px-5">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/45 backdrop-blur-2xl">
+      <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <NavLink to="/" className="group flex items-center gap-3">
           <motion.div
-            className="flex items-center gap-3"
-            whileHover={{ scale: 1.015 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            whileHover={{ rotate: -8, scale: 1.04 }}
+            transition={{ type: "spring", stiffness: 320, damping: 20 }}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] shadow-[0_0_32px_rgba(255,255,255,0.08)]"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] shadow-[0_0_40px_rgba(255,255,255,0.03)]">
-              <MessageSquare className="h-5 w-5 text-white/90" />
-            </div>
-            <span className="text-base font-semibold tracking-tight text-white/90 md:text-lg">
-              Aquavern
-            </span>
+            <MessageSquareText className="h-5 w-5 text-white" />
           </motion.div>
-
-          <div className="flex items-center gap-5 sm:gap-8">
-            {[
-              { path: "/", label: "Home" },
-              { path: "/chatbot", label: "Chatbot" },
-            ].map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => `
-                  relative rounded-xl px-2.5 py-2 text-sm font-medium transition-all duration-300 md:px-3
-                  ${isActive ? "text-white" : "text-zinc-500 hover:text-white"}
-                `}
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className="relative z-10">{item.label}</span>
-                    {isActive && (
-                      <motion.div
-                        layoutId="navbar-indicator"
-                        className="absolute inset-0 rounded-xl bg-white/[0.075] shadow-[0_0_30px_rgba(255,255,255,0.04)]"
-                        transition={{ type: "spring", bounce: 0.22, duration: 0.55 }}
-                      />
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
+          <div>
+            <p className="text-sm font-semibold tracking-wide text-white">Aquavern</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/35">Internal</p>
           </div>
+        </NavLink>
+
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) =>
+                cn(
+                  "relative rounded-md px-4 py-2 text-sm font-medium text-white/55 transition-colors duration-300 hover:text-white",
+                  isActive && "text-black"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.span
+                      layoutId="active-nav-pill"
+                      className="absolute inset-0 rounded-md bg-white"
+                      transition={{ type: "spring", stiffness: 430, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative z-10">{link.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }

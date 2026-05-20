@@ -1,83 +1,111 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import ChatList from "./ChatList";
-import ChatInterface from "./ChatInterface";
+import { useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Send, Sparkles } from "lucide-react";
+import AutoResizeTextarea from "../ui/AutoResizeTextarea";
+import { Button } from "../ui/Button";
+import { cn } from "../../lib/utils";
 
-export default function ChatWindow({ chats }) {
-  const [selectedChat, setSelectedChat] = useState(null);
+export default function ChatWindow({ chat }) {
+  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState(chat.messages);
+
+  const statusLabel = useMemo(() => `${chat.role} • ${chat.status}`, [chat.role, chat.status]);
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const trimmed = draft.trim();
+
+    if (!trimmed) return;
+
+    setMessages((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        sender: "You",
+        text: trimmed,
+        timestamp: "Now",
+        direction: "outgoing",
+      },
+    ]);
+    setDraft("");
+  }
 
   return (
-    <div
-      className={`relative transition-all duration-500 ${
-        selectedChat
-          ? "min-h-[680px] lg:h-[calc(100vh-120px)] lg:min-h-[680px]"
-          : "min-h-[360px] md:min-h-[420px]"
-      }`}
-    >
-      <div className="hidden h-full gap-6 lg:flex xl:gap-8">
-        <motion.div
-          className={`h-full transition-[width] duration-500 ease-out ${
-            selectedChat ? "w-[36%] min-w-[300px]" : "w-full"
-          }`}
-          layout
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          <ChatList
-            chats={chats}
-            selectedChat={selectedChat}
-            onSelectChat={setSelectedChat}
+    <section className="glass-panel flex min-h-[32rem] flex-col overflow-hidden rounded-lg">
+      <div className="flex items-center justify-between gap-4 border-b border-white/10 p-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-semibold text-black">
+            {chat.initials}
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold text-white">{chat.name}</h2>
+            <p className="truncate text-xs text-white/45">{statusLabel}</p>
+          </div>
+        </div>
+        <div className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white/45 sm:flex">
+          <Sparkles className="h-3.5 w-3.5" />
+          Secure room
+        </div>
+      </div>
+
+      <div className="relative flex-1 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),transparent_24rem)]" />
+        <div className="relative flex h-[28rem] flex-col gap-3 overflow-y-auto px-4 py-5">
+          <AnimatePresence initial={false}>
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.24 }}
+                className={cn(
+                  "flex",
+                  message.direction === "outgoing" ? "justify-end" : "justify-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "max-w-[82%] rounded-lg border px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.24)]",
+                    message.direction === "outgoing"
+                      ? "border-white/15 bg-white text-black"
+                      : "border-white/10 bg-white/[0.06] text-white"
+                  )}
+                >
+                  <p className="text-sm leading-6">{message.text}</p>
+                  <p
+                    className={cn(
+                      "mt-1 text-right text-[11px]",
+                      message.direction === "outgoing" ? "text-black/45" : "text-white/35"
+                    )}
+                  >
+                    {message.timestamp}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="border-t border-white/10 p-3">
+        <div className="flex items-end gap-2 rounded-lg border border-white/10 bg-black/45 p-2 transition-colors focus-within:border-white/25">
+          <AutoResizeTextarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Write a private message..."
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                handleSubmit(event);
+              }
+            }}
           />
-        </motion.div>
-
-        <AnimatePresence>
-          {selectedChat && (
-            <motion.div
-              key={`chat-interface-${selectedChat.id}`}
-              className="h-full min-w-0 flex-1"
-              initial={{ opacity: 0, x: 26, scale: 0.985, filter: "blur(8px)" }}
-              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, x: 26, scale: 0.985, filter: "blur(8px)" }}
-              transition={{ duration: 0.38, ease: "easeOut" }}
-            >
-              <ChatInterface chat={selectedChat} onBack={() => setSelectedChat(null)} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="h-full lg:hidden">
-        <AnimatePresence mode="wait">
-          {selectedChat ? (
-            <motion.div
-              key={`mobile-chat-interface-${selectedChat.id}`}
-              className="h-full"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChatInterface chat={selectedChat} onBack={() => setSelectedChat(null)} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="mobile-chat-list"
-              className="h-full"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChatList
-                chats={chats}
-                selectedChat={selectedChat}
-                onSelectChat={setSelectedChat}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {!selectedChat && <div className="hidden lg:block" />}
-    </div>
+          <Button size="icon" variant="primary" aria-label="Send private message">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
