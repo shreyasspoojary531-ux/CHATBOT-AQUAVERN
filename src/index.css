@@ -47,6 +47,12 @@ button {
   color: #ffffff;
 }
 
+.user-message-bubble::selection,
+.user-message-bubble *::selection {
+  background-color: #007acc;
+  color: #ffffff;
+}
+
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;

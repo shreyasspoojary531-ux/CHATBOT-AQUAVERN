@@ -68,7 +68,7 @@ export default function ChatWindow({ chat }) {
                   className={cn(
                     "max-w-[82%] rounded-lg border px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.24)]",
                     message.direction === "outgoing"
-                      ? "border-white/15 bg-white text-black"
+                      ? "user-message-bubble border-white/15 bg-white text-black"
                       : "border-white/10 bg-white/[0.06] text-white"
                   )}
                 >

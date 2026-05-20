@@ -76,7 +76,7 @@ export default function ChatbotInterface() {
         <header className="border-b border-white/10 p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.26em] text-white/35">Chatbot Page</p>
+              <p className="text-xs uppercase tracking-[0.26em] text-white/35">Chatbot Live</p>
               <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
                 Aquavern Intelligence
               </h1>
