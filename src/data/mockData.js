@@ -32,6 +32,39 @@ export const privateChats = [
       },
     ],
   },
+  {
+    id: "design-review",
+    name: "Ishan Rao",
+    role: "Product Design",
+    initials: "IR",
+    lastMessage: "The thread workspace feels cleaner now.",
+    timestamp: "10:18",
+    status: "Away",
+    unread: 0,
+    messages: [
+      {
+        id: 1,
+        sender: "Ishan Rao",
+        text: "I reviewed the latest chat workspace direction.",
+        timestamp: "10:07",
+        direction: "incoming",
+      },
+      {
+        id: 2,
+        sender: "You",
+        text: "How does the empty-state first approach feel?",
+        timestamp: "10:11",
+        direction: "outgoing",
+      },
+      {
+        id: 3,
+        sender: "Ishan Rao",
+        text: "The thread workspace feels cleaner now.",
+        timestamp: "10:18",
+        direction: "incoming",
+      },
+    ],
+  },
 ];
 
 export const notifications = [

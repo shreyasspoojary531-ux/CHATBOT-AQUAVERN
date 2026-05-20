@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import AutoResizeTextarea from "../ui/AutoResizeTextarea";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
 
-export default function ChatWindow({ chat }) {
+export default function ChatWindow({ chat, onBack }) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState(chat.messages);
 
@@ -31,9 +31,20 @@ export default function ChatWindow({ chat }) {
   }
 
   return (
-    <section className="glass-panel flex min-h-[32rem] flex-col overflow-hidden rounded-lg">
-      <div className="flex items-center justify-between gap-4 border-b border-white/10 p-4">
+    <section className="glass-panel flex h-full min-h-0 flex-col overflow-hidden rounded-lg">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 p-4">
         <div className="flex min-w-0 items-center gap-3">
+          {onBack && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={onBack}
+              aria-label="Back to private chat threads"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.045] text-white transition-all duration-300 hover:border-cyan-200/20 hover:bg-white/[0.075] md:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </motion.button>
+          )}
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-semibold text-black">
             {chat.initials}
           </div>
@@ -48,9 +59,9 @@ export default function ChatWindow({ chat }) {
         </div>
       </div>
 
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),transparent_24rem)]" />
-        <div className="relative flex h-[28rem] flex-col gap-3 overflow-y-auto px-4 py-5">
+        <div className="premium-scrollbar relative flex h-full flex-col gap-3 overflow-y-auto px-3 py-4 sm:px-4 sm:py-5">
           <AnimatePresence initial={false}>
             {messages.map((message) => (
               <motion.div
@@ -88,7 +99,7 @@ export default function ChatWindow({ chat }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-white/10 p-3">
+      <form onSubmit={handleSubmit} className="shrink-0 border-t border-white/10 p-3">
         <div className="flex items-end gap-2 rounded-lg border border-white/10 bg-black/45 p-2 transition-colors focus-within:border-white/25">
           <AutoResizeTextarea
             value={draft}

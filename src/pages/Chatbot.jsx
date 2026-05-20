@@ -1,5 +1,9 @@
 import ChatbotInterface from "../components/chatbot/ChatbotInterface";
 
 export default function Chatbot() {
-  return <ChatbotInterface />;
+  return (
+    <div className="chatbot-page-wrapper">
+      <ChatbotInterface />
+    </div>
+  );
 }

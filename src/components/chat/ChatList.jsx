@@ -4,8 +4,8 @@ import { cn } from "../../lib/utils";
 
 export default function ChatList({ chats, activeChatId, onSelectChat, compact = false }) {
   return (
-    <section className="glass-panel flex min-h-[32rem] flex-col rounded-lg">
-      <div className="border-b border-white/10 p-4">
+    <section className="glass-panel flex h-full min-h-0 flex-col rounded-lg">
+      <div className="shrink-0 border-b border-white/10 p-4">
         <p className="text-xs uppercase tracking-[0.24em] text-white/35">Private Chats</p>
         <div className="mt-2 flex items-end justify-between gap-3">
           <h1 className="text-2xl font-semibold text-white">{compact ? "Threads" : "Private Chats"}</h1>
@@ -15,7 +15,7 @@ export default function ChatList({ chats, activeChatId, onSelectChat, compact = 
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+      <div className="premium-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {chats.map((chat, index) => {
           const active = chat.id === activeChatId;
 

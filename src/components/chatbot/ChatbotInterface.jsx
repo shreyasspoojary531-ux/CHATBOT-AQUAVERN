@@ -60,7 +60,7 @@ export default function ChatbotInterface() {
       initial={{ opacity: 0, y: 18, scale: 0.985 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className="relative min-h-[calc(100vh-7.5rem)] overflow-hidden rounded-lg border border-white/10 bg-black/55 shadow-[0_30px_120px_rgba(0,0,0,0.6)]"
+      className="relative flex h-full w-full overflow-hidden border-y border-white/10 bg-[#0d0e12] shadow-[0_30px_120px_rgba(0,0,0,0.45)]"
     >
       <div className="pointer-events-none absolute inset-0">
         <motion.div
@@ -72,8 +72,8 @@ export default function ChatbotInterface() {
         <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.08),transparent_35%,rgba(255,255,255,0.04)_72%,transparent)]" />
       </div>
 
-      <div className="relative flex min-h-[calc(100vh-7.5rem)] w-full flex-col">
-        <header className="border-b border-white/10 p-5 sm:p-6">
+      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col">
+        <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.26em] text-white/35">Chatbot Live</p>
@@ -97,8 +97,8 @@ export default function ChatbotInterface() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="no-scrollbar mx-auto flex h-[calc(100vh-18.5rem)] w-full max-w-5xl flex-col gap-4 overflow-y-auto scroll-smooth px-4 py-6 sm:h-[calc(100vh-19rem)] sm:px-6 lg:px-8">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="premium-scrollbar mx-auto flex h-full w-full max-w-5xl flex-col gap-4 overflow-y-auto scroll-smooth px-4 py-5 sm:px-6 lg:px-8">
             <AnimatePresence initial={false}>
               {messages.map((message) => (
                 <motion.div
@@ -182,7 +182,7 @@ export default function ChatbotInterface() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 bg-black/35 p-4 sm:p-5">
+        <div className="shrink-0 border-t border-white/10 bg-[#0d0e12]/90 px-4 py-3 backdrop-blur-2xl sm:px-5">
           <motion.form
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 12 }}
