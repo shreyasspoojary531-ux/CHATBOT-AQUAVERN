@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, MessageSquareText, X } from "lucide-react";
+import { Menu, MessageSquareText, X, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const links = [
-  { label: "Home", to: "/" },
+  { label: "Home", to: "/home" },
   { label: "Chatbot", to: "/chatbot" },
   { label: "Notifications", to: "/notifications" },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("authenticated");
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-2xl">
       <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8">
-        <NavLink to="/" onClick={() => setMobileMenuOpen(false)} className="group flex items-center gap-3">
+        <NavLink to="/home" onClick={() => setMobileMenuOpen(false)} className="group flex items-center gap-3">
           <motion.div
             whileHover={{ rotate: -8, scale: 1.04 }}
             transition={{ type: "spring", stiffness: 320, damping: 20 }}
@@ -65,6 +71,19 @@ export default function Navbar() {
               )}
             </NavLink>
           ))}
+        </div>
+
+        {/* Desktop Logout Button */}
+        <div className="hidden md:flex items-center">
+          <motion.button
+            onClick={handleLogout}
+            whileHover={{ scale: 1.02, borderColor: "rgba(239, 68, 68, 0.25)", backgroundColor: "rgba(239, 68, 68, 0.065)" }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-medium text-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-md transition-all duration-300 hover:text-red-400"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Logout
+          </motion.button>
         </div>
 
         <motion.button
@@ -134,6 +153,20 @@ export default function Navbar() {
                     )}
                   </NavLink>
                 ))}
+
+                <div className="my-1 border-t border-white/10" />
+
+                <motion.button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm font-medium text-red-400 transition-all duration-300 active:scale-[0.98] hover:bg-red-500/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout Workspace
+                </motion.button>
               </div>
             </motion.aside>
           </motion.div>
