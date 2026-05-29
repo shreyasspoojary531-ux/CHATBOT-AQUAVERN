@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, MessageSquareText, X, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useAuth } from "../auth/AuthContext";
 
 const links = [
   { label: "Home", to: "/home" },
@@ -13,9 +14,10 @@ const links = [
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("authenticated");
+    logout();
     navigate("/login", { replace: true });
   };
 

@@ -5,24 +5,27 @@ import Chatbot from "./pages/Chatbot";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./components/auth/AuthContext";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/chatbot" element={<Chatbot />} />
-            <Route path="/" element={<Navigate to="/home" replace />} />
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/chatbot" element={<Chatbot />} />
+              <Route path="/" element={<Navigate to="/home" replace />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

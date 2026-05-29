@@ -3,29 +3,44 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageSquareText, Lock, User, Check } from "lucide-react";
 import { Button } from "../components/ui/Button";
+import { useAuth } from "../components/auth/AuthContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { login, loading, error, setError, accessToken } = useAuth();
 
   // Redirect to home if already logged in
   useEffect(() => {
-    if (localStorage.getItem("authenticated") === "true") {
+    if (accessToken) {
       navigate("/home", { replace: true });
     }
-  }, [navigate]);
+  }, [accessToken, navigate]);
 
-  const handleLogin = (e) => {
+  // Clear error state on mount
+  useEffect(() => {
+    setError(null);
+  }, [setError]);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    localStorage.setItem("authenticated", "true");
-    if (rememberMe) {
-      localStorage.setItem("remembered_username", username);
-    } else {
-      localStorage.removeItem("remembered_username");
+    
+    if (!username.trim() || !password.trim()) {
+      setError("Please enter both username and password.");
+      return;
     }
-    navigate("/home", { replace: true });
+
+    const success = await login(username, password);
+    if (success) {
+      if (rememberMe) {
+        localStorage.setItem("remembered_username", username);
+      } else {
+        localStorage.removeItem("remembered_username");
+      }
+      navigate("/home", { replace: true });
+    }
   };
 
   // Populate remembered username if available
@@ -85,6 +100,16 @@ export default function Login() {
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs text-red-400"
+            >
+              {error}
+            </motion.div>
+          )}
+
           <div className="space-y-4">
             {/* Username Input */}
             <div className="space-y-2">
@@ -97,8 +122,12 @@ export default function Login() {
                   type="text"
                   placeholder="Enter your username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15"
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  disabled={loading}
+                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -114,8 +143,12 @@ export default function Login() {
                   type="password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  disabled={loading}
+                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -129,17 +162,20 @@ export default function Login() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={loading}
                   className="sr-only"
                 />
                 <div className={`flex h-[18px] w-[18px] items-center justify-center rounded border transition-all duration-300 ${
                   rememberMe 
                     ? "border-cyan-200/30 bg-white text-black" 
                     : "border-white/12 bg-white/[0.03] group-hover:border-white/25"
-                }`}>
+                } ${loading ? "opacity-40 cursor-not-allowed" : ""}`}>
                   {rememberMe && <Check className="h-3 w-3 stroke-[3]" />}
                 </div>
               </div>
-              <span className="select-none text-xs font-medium text-white/60 transition-colors group-hover:text-white/80">
+              <span className={`select-none text-xs font-medium text-white/60 transition-colors group-hover:text-white/80 ${
+                loading ? "opacity-40" : ""
+              }`}>
                 Remember me
               </span>
             </label>
@@ -148,9 +184,10 @@ export default function Login() {
           {/* Submit Button */}
           <Button
             type="submit"
+            disabled={loading}
             className="w-full text-sm font-semibold active:scale-[0.985] shadow-[0_12px_40px_rgba(255,255,255,0.06)]"
           >
-            Access Workspace
+            {loading ? "Accessing Workspace..." : "Access Workspace"}
           </Button>
         </form>
       </motion.div>
