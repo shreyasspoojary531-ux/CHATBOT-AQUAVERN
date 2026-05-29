@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, MessageSquareText, X, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAuth } from "../auth/AuthContext";
+import { useAuthStore } from "../../store/authStore";
 
 const links = [
   { label: "Home", to: "/home" },
@@ -14,11 +14,21 @@ const links = [
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const clearAccessToken = useAuthStore((state) => state.clearAccessToken);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      // Hit POST https://aquavern.com/auth/logout with credentials include
+      await fetch("https://aquavern.com/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout request error:", error);
+    } finally {
+      clearAccessToken();
+      navigate("/login", { replace: true });
+    }
   };
 
   return (

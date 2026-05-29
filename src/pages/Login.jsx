@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageSquareText, Lock, User, Check } from "lucide-react";
 import { Button } from "../components/ui/Button";
-import { useAuth } from "../components/auth/AuthContext";
+import { useAuthStore } from "../store/authStore";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const navigate = useNavigate();
-  const { login, loading, error, setError, accessToken } = useAuth();
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
   // Redirect to home if already logged in
   useEffect(() => {
@@ -18,11 +22,6 @@ export default function Login() {
       navigate("/home", { replace: true });
     }
   }, [accessToken, navigate]);
-
-  // Clear error state on mount
-  useEffect(() => {
-    setError(null);
-  }, [setError]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,14 +31,44 @@ export default function Login() {
       return;
     }
 
-    const success = await login(username, password);
-    if (success) {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("https://aquavern.com/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: "include", // Ensure refreshToken cookie exchange works
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Invalid username or password.");
+      }
+
+      const data = await response.json();
+      if (!data.accessToken) {
+        throw new Error("No access token returned from system.");
+      }
+
+      // Store ONLY in memory (Zustand)
+      setAccessToken(data.accessToken);
+
+      // Handle remembered username
       if (rememberMe) {
         localStorage.setItem("remembered_username", username);
       } else {
         localStorage.removeItem("remembered_username");
       }
+
       navigate("/home", { replace: true });
+    } catch (err) {
+      setError(err.message || "Unable to connect. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 

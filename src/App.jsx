@@ -5,11 +5,11 @@ import Chatbot from "./pages/Chatbot";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { AuthProvider } from "./components/auth/AuthContext";
+import AuthInit from "./components/auth/AuthInit";
 
 export default function App() {
   return (
-    <AuthProvider>
+    <AuthInit>
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
@@ -26,6 +26,6 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </AuthInit>
   );
 }
