@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageSquareText, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { privateChats } from "../../data/mockData";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
@@ -36,7 +37,80 @@ function EmptyThreadState() {
 }
 
 export default function ChatInterface() {
+  const [chats, setChats] = useState(privateChats);
   const [activeChat, setActiveChat] = useState(null);
+  const location = useLocation();
+  // Guard: track which order state key we've already processed to prevent double-run
+  const processedOrderRef = useRef(null);
+
+  // Handle service order navigation — auto-open a new chat thread for the ship
+  useEffect(() => {
+    const order = location.state?.serviceOrder;
+    if (!order) return;
+
+    // Derive a stable key from the order (ship + services combo)
+    const orderKey = `${order.shipName}-${order.services.join(",")}-${order.location}`;
+    // Skip if this exact order was already processed (handles React StrictMode double-run)
+    if (processedOrderRef.current === orderKey) return;
+    processedOrderRef.current = orderKey;
+
+    // Build a synthetic chat thread for the ship
+    const shipChatId = `ship-${order.shipName.replace(/\s+/g, "-").toLowerCase()}`;
+    const existingIndex = chats.findIndex((c) => c.id === shipChatId);
+
+    const serviceLabels = order.services
+      .map((id) => {
+        const labels = {
+          oil: "Oil", food: "Food", water: "Water", fuel: "Fuel",
+          medical: "Medical", spare_parts: "Spare Parts", repair: "Repair", crew_transfer: "Crew Transfer",
+        };
+        return labels[id] || id;
+      })
+      .join(", ");
+
+    const prefilledMsg = order.prefilledMessage || `Hello ${order.shipName}! 🚢 I would like to request the following services: ${serviceLabels}. Can we coordinate delivery when our ships meet at ${order.location}? Please confirm availability.`;
+
+    const newShipChat = {
+      id: shipChatId,
+      name: order.shipName,
+      role: "Ship Service",
+      initials: order.shipInitials,
+      lastMessage: prefilledMsg,
+      timestamp: "Now",
+      status: "Online",
+      unread: 0,
+      messages: [
+        {
+          id: `order-${Date.now()}`,
+          sender: "You",
+          text: prefilledMsg,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          direction: "outgoing",
+        },
+      ],
+    };
+
+    if (existingIndex >= 0) {
+      // Append message to existing thread
+      const updated = [...chats];
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        messages: [...updated[existingIndex].messages, newShipChat.messages[0]],
+        lastMessage: prefilledMsg,
+        timestamp: "Now",
+      };
+      setChats(updated);
+      setActiveChat(updated[existingIndex]);
+    } else {
+      setChats((prev) => [newShipChat, ...prev]);
+      setActiveChat(newShipChat);
+    }
+
+    // Clear location state after consuming
+    window.history.replaceState({}, "");
+  }, [location.state]);
+
+  const handleSelectChat = (chat) => setActiveChat(chat);
 
   return (
     <>
@@ -45,9 +119,9 @@ export default function ChatInterface() {
         className="hidden h-full min-h-0 gap-4 md:grid md:grid-cols-[minmax(14rem,32%)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,28%)_minmax(0,1fr)]"
       >
         <ChatList
-          chats={privateChats}
+          chats={chats}
           activeChatId={activeChat?.id}
-          onSelectChat={setActiveChat}
+          onSelectChat={handleSelectChat}
           compact
         />
         <AnimatePresence mode="wait">
@@ -100,9 +174,9 @@ export default function ChatInterface() {
               className="h-full min-h-0"
             >
               <ChatList
-                chats={privateChats}
+                chats={chats}
                 activeChatId={activeChat?.id}
-                onSelectChat={setActiveChat}
+                onSelectChat={handleSelectChat}
                 compact
               />
             </motion.div>

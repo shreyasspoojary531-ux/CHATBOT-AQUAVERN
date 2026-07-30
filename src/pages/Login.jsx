@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageSquareText, Lock, User, Check } from "lucide-react";
+import { MessageSquareText, Lock, Mail, Check, UserPlus, LogIn } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { useAuthStore } from "../store/authStore";
+import { supabase } from "../utils/supabase";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const navigate = useNavigate();
   const accessToken = useAuthStore((state) => state.accessToken);
-  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const setSession = useAuthStore((state) => state.setSession);
 
   // Redirect to home if already logged in
   useEffect(() => {
@@ -23,63 +26,76 @@ export default function Login() {
     }
   }, [accessToken, navigate]);
 
-  const handleLogin = async (e) => {
+  // Populate remembered email if available
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter both email and password.");
       return;
     }
 
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const response = await fetch("https://aquavern.com/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: "include", // Ensure refreshToken cookie exchange works
-      });
+      if (isSignUp) {
+        // Supabase Sign Up
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Invalid username or password.");
-      }
+        if (signUpError) {
+          throw signUpError;
+        }
 
-      const data = await response.json();
-      if (!data.accessToken) {
-        throw new Error("No access token returned from system.");
-      }
-
-      // Store ONLY in memory (Zustand)
-      setAccessToken(data.accessToken);
-
-      // Handle remembered username
-      if (rememberMe) {
-        localStorage.setItem("remembered_username", username);
+        if (data.session) {
+          setSession(data.session);
+          navigate("/home", { replace: true });
+        } else if (data.user) {
+          setSuccessMessage("Account created successfully! Check your email to confirm registration or sign in.");
+          setIsSignUp(false);
+        }
       } else {
-        localStorage.removeItem("remembered_username");
-      }
+        // Supabase Sign In
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      navigate("/home", { replace: true });
+        if (signInError) {
+          throw signInError;
+        }
+
+        if (data.session) {
+          setSession(data.session);
+
+          // Handle remembered email
+          if (rememberMe) {
+            localStorage.setItem("remembered_email", email);
+          } else {
+            localStorage.removeItem("remembered_email");
+          }
+
+          navigate("/home", { replace: true });
+        }
+      }
     } catch (err) {
-      setError(err.message || "Unable to connect. Please try again later.");
+      setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
-  // Populate remembered username if available
-  useEffect(() => {
-    const savedUsername = localStorage.getItem("remembered_username");
-    if (savedUsername) {
-      setUsername(savedUsername);
-      setRememberMe(true);
-    }
-  }, []);
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden bg-[#0d0e12] text-white">
@@ -127,8 +143,8 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="mt-8 space-y-6">
+        {/* Login / Signup Form */}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -139,24 +155,34 @@ export default function Login() {
             </motion.div>
           )}
 
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-400"
+            >
+              {successMessage}
+            </motion.div>
+          )}
+
           <div className="space-y-4">
-            {/* Username Input */}
+            {/* Email Input */}
             <div className="space-y-2">
               <label className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/45">
-                Username
+                Email Address
               </label>
               <div className="relative flex items-center">
-                <User className="absolute left-3.5 h-4.5 w-4.5 text-white/35" />
+                <Mail className="absolute left-3.5 h-4.5 w-4.5 text-white/35" />
                 <input
-                  type="text"
-                  placeholder="Enter your username"
-                  value={username}
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
                   onChange={(e) => {
-                    setUsername(e.target.value);
+                    setEmail(e.target.value);
                     if (error) setError(null);
                   }}
                   disabled={loading}
-                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -177,38 +203,40 @@ export default function Login() {
                     if (error) setError(null);
                   }}
                   disabled={loading}
-                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/70 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full rounded-lg border border-white/12 bg-white/[0.035] py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 outline-none transition-all duration-300 focus:border-white/28 focus:bg-white/[0.06] focus:ring-1 focus:ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
 
           {/* Remember Me Checkbox */}
-          <div className="flex items-center justify-between">
-            <label className="group flex cursor-pointer items-center gap-2.5">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
-                  className="sr-only"
-                />
-                <div className={`flex h-[18px] w-[18px] items-center justify-center rounded border transition-all duration-300 ${
-                  rememberMe 
-                    ? "border-cyan-200/30 bg-white text-black" 
-                    : "border-white/12 bg-white/[0.03] group-hover:border-white/25"
-                } ${loading ? "opacity-40 cursor-not-allowed" : ""}`}>
-                  {rememberMe && <Check className="h-3 w-3 stroke-[3]" />}
+          {!isSignUp && (
+            <div className="flex items-center justify-between">
+              <label className="group flex cursor-pointer items-center gap-2.5">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={loading}
+                    className="sr-only"
+                  />
+                  <div className={`flex h-[18px] w-[18px] items-center justify-center rounded border transition-all duration-300 ${
+                    rememberMe 
+                      ? "border-cyan-200/30 bg-white text-black" 
+                      : "border-white/12 bg-white/[0.03] group-hover:border-white/25"
+                  } ${loading ? "opacity-40 cursor-not-allowed" : ""}`}>
+                    {rememberMe && <Check className="h-3 w-3 stroke-[3]" />}
+                  </div>
                 </div>
-              </div>
-              <span className={`select-none text-xs font-medium text-white/60 transition-colors group-hover:text-white/80 ${
-                loading ? "opacity-40" : ""
-              }`}>
-                Remember me
-              </span>
-            </label>
-          </div>
+                <span className={`select-none text-xs font-medium text-white/60 transition-colors group-hover:text-white/80 ${
+                  loading ? "opacity-40" : ""
+                }`}>
+                  Remember me
+                </span>
+              </label>
+            </div>
+          )}
 
           {/* Submit Button */}
           <Button
@@ -216,8 +244,33 @@ export default function Login() {
             disabled={loading}
             className="w-full text-sm font-semibold active:scale-[0.985] shadow-[0_12px_40px_rgba(255,255,255,0.06)]"
           >
-            {loading ? "Accessing Workspace..." : "Access Workspace"}
+            {loading
+              ? isSignUp ? "Creating Account..." : "Accessing Workspace..."
+              : isSignUp ? "Create Account" : "Access Workspace"}
           </Button>
+
+          {/* Toggle Sign In / Sign Up */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+                setSuccessMessage(null);
+              }}
+              className="text-xs text-white/50 hover:text-white transition-colors"
+            >
+              {isSignUp ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <LogIn className="h-3.5 w-3.5" /> Already have an account? Sign in
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5" /> Don't have an account? Sign up
+                </span>
+              )}
+            </button>
+          </div>
         </form>
       </motion.div>
     </div>

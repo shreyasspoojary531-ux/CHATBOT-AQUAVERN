@@ -4,29 +4,27 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, MessageSquareText, X, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
+import { supabase } from "../../utils/supabase";
 
 const links = [
   { label: "Home", to: "/home" },
   { label: "Chatbot", to: "/chatbot" },
+  { label: "Services", to: "/services" },
   { label: "Notifications", to: "/notifications" },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const clearAccessToken = useAuthStore((state) => state.clearAccessToken);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const handleLogout = async () => {
     try {
-      // Hit POST https://aquavern.com/auth/logout with credentials include
-      await fetch("https://aquavern.com/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await supabase.auth.signOut();
     } catch (error) {
       console.error("Logout request error:", error);
     } finally {
-      clearAccessToken();
+      clearAuth();
       navigate("/login", { replace: true });
     }
   };
@@ -91,7 +89,7 @@ export default function Navbar() {
             onClick={handleLogout}
             whileHover={{ scale: 1.02, borderColor: "rgba(239, 68, 68, 0.25)", backgroundColor: "rgba(239, 68, 68, 0.065)" }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-medium text-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-md transition-all duration-300 hover:text-red-400"
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-xs font-medium text-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-md transition-all duration-300 hover:text-red-400 cursor-pointer"
           >
             <LogOut className="h-3.5 w-3.5" />
             Logout
@@ -174,7 +172,7 @@ export default function Navbar() {
                     handleLogout();
                   }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm font-medium text-red-400 transition-all duration-300 active:scale-[0.98] hover:bg-red-500/10"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm font-medium text-red-400 transition-all duration-300 active:scale-[0.98] hover:bg-red-500/10 cursor-pointer"
                 >
                   <LogOut className="h-4 w-4" />
                   Logout Workspace

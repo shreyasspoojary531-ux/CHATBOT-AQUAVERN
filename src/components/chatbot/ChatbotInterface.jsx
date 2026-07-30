@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, CornerDownLeft, Send, UserRound } from "lucide-react";
-import { chatbotStarterMessages, defaultBotReply } from "../../data/mockData";
+import { Bot, CornerDownLeft, Send, UserRound, Sparkles, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { chatbotStarterMessages } from "../../data/mockData";
 import AutoResizeTextarea from "../ui/AutoResizeTextarea";
 import { Button } from "../ui/Button";
 import TypingDots from "../ui/TypingDots";
 import { cn } from "../../lib/utils";
+import { generateNIMCompletion } from "../../services/nvidiaLLM";
 
 export default function ChatbotInterface() {
   const [messages, setMessages] = useState(chatbotStarterMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [openReasoningId, setOpenReasoningId] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function ChatbotInterface() {
     return () => window.cancelAnimationFrame(frame);
   }, [messages, isTyping]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const trimmed = input.trim();
 
@@ -34,26 +36,45 @@ export default function ChatbotInterface() {
       id: `user-${Date.now()}`,
       role: "user",
       content: trimmed,
-      timestamp: "Now",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((current) => [...current, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput("");
     setIsTyping(true);
 
-    window.setTimeout(() => {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: defaultBotReply,
-          timestamp: "Just now",
-        },
-      ]);
+    try {
+      // Send conversation history to NVIDIA NIM API
+      const result = await generateNIMCompletion(newMessages);
+
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: result.content,
+        reasoning: result.reasoning,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((current) => [...current, assistantMessage]);
+    } catch (err) {
+      console.error("NVIDIA NIM Completion Error:", err);
+      const errorMessage = {
+        id: `assistant-error-${Date.now()}`,
+        role: "assistant",
+        isError: true,
+        content: `Error generating response: ${err.message || "Unable to reach NVIDIA NIM service."}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((current) => [...current, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 500);
+    }
   }
+
+  const toggleReasoning = (id) => {
+    setOpenReasoningId((current) => (current === id ? null : id));
+  };
 
   return (
     <motion.section
@@ -64,7 +85,7 @@ export default function ChatbotInterface() {
     >
       <div className="pointer-events-none absolute inset-0">
         <motion.div
-          className="absolute left-1/2 top-[-10rem] h-80 w-80 -translate-x-1/2 rounded-full bg-white/[0.09] blur-3xl"
+          className="absolute left-1/2 top-[-10rem] h-80 w-80 -translate-x-1/2 rounded-full bg-cyan-500/[0.08] blur-3xl"
           animate={{ opacity: [0.45, 0.85, 0.45], scale: [1, 1.08, 1] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -85,14 +106,10 @@ export default function ChatbotInterface() {
               initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.18, duration: 0.35 }}
-              className="flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/55"
+              className="flex w-fit items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.06] px-3 py-2 text-xs text-cyan-200/80"
             >
-              <motion.span
-                className="h-2 w-2 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.8)]"
-                animate={{ opacity: [0.45, 1, 0.45], scale: [1, 1.25, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              />
-              Dummy response active
+              <Sparkles className="h-3.5 w-3.5 text-cyan-300 animate-pulse" />
+              NVIDIA NIM (gpt-oss-120b) Active
             </motion.div>
           </div>
         </header>
@@ -119,11 +136,15 @@ export default function ChatbotInterface() {
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
                       message.role === "user"
                         ? "border-white/15 bg-white text-black"
+                        : message.isError
+                        ? "border-red-500/30 bg-red-500/10 text-red-400"
                         : "border-white/10 bg-white/[0.055] text-white"
                     )}
                   >
                     {message.role === "user" ? (
                       <UserRound className="h-5 w-5" />
+                    ) : message.isError ? (
+                      <AlertTriangle className="h-5 w-5" />
                     ) : (
                       <Bot className="h-5 w-5" />
                     )}
@@ -134,16 +155,45 @@ export default function ChatbotInterface() {
                       borderColor:
                         message.role === "user"
                           ? "rgba(255,255,255,0.28)"
+                          : message.isError
+                          ? "rgba(239,68,68,0.4)"
                           : "rgba(255,255,255,0.18)",
                     }}
                     className={cn(
                       "max-w-[46rem] rounded-lg border px-4 py-3",
                       message.role === "user"
                         ? "border-white/15 bg-white text-black"
+                        : message.isError
+                        ? "border-red-500/30 bg-red-500/10 text-red-300"
                         : "border-white/10 bg-white/[0.055] text-white shadow-[0_18px_60px_rgba(0,0,0,0.26)]"
                     )}
                   >
-                    <p className="text-sm leading-6">{message.content}</p>
+                    {/* Collapsible Reasoning Trace if available */}
+                    {message.reasoning && (
+                      <div className="mb-3 rounded border border-cyan-500/20 bg-cyan-950/20 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => toggleReasoning(message.id)}
+                          className="flex w-full items-center justify-between px-3 py-1.5 text-cyan-300 hover:text-cyan-200"
+                        >
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Sparkles className="h-3 w-3" /> Model Reasoning Trace
+                          </span>
+                          {openReasoningId === message.id ? (
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        {openReasoningId === message.id && (
+                          <div className="border-t border-cyan-500/20 px-3 py-2 text-cyan-200/70 whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
+                            {message.reasoning}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="text-sm leading-6 whitespace-pre-wrap">{message.content}</p>
                     <p
                       className={cn(
                         "mt-2 text-[11px]",
@@ -196,7 +246,7 @@ export default function ChatbotInterface() {
                 <AutoResizeTextarea
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Message Aquavern..."
+                  placeholder="Message Aquavern (NVIDIA gpt-oss-120b)..."
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {
                       event.preventDefault();

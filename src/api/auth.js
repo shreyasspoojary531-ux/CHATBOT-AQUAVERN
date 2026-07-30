@@ -1,35 +1,19 @@
-import axios from "axios";
+import { supabase } from "../utils/supabase";
 
-/**
- * Backend Contract:
- * - POST /login -> body: { username, password }
- * - POST /logout -> no body, refresh token sent via cookie
- * - POST /refresh -> body: { user_id }
- */
-
-export const loginApi = async (username, password) => {
-  const response = await axios.post(
-    "/login",
-    { username, password },
-    { withCredentials: true }
-  );
-  return response.data;
+export const loginApi = async (email, password) => {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
 };
 
 export const logoutApi = async () => {
-  const response = await axios.post(
-    "/logout",
-    {},
-    { withCredentials: true }
-  );
-  return response.data;
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+  return { success: true };
 };
 
-export const refreshApi = async (user_id) => {
-  const response = await axios.post(
-    "/refresh",
-    { user_id },
-    { withCredentials: true }
-  );
-  return response.data;
+export const refreshApi = async () => {
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error) throw error;
+  return data;
 };
