@@ -6,22 +6,20 @@ export default function AutoResizeTextarea({
   onChange,
   className,
   minRows = 1,
-  maxRows = 5,
+  maxRows = 6,
+  disabled = false,
   ...props
 }) {
   const ref = useRef(null);
 
   useEffect(() => {
-    const textarea = ref.current;
+    const el = ref.current;
+    if (!el) return;
 
-    if (!textarea) return;
-
-    const lineHeight = 24;
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(
-      textarea.scrollHeight,
-      lineHeight * maxRows + 24
-    )}px`;
+    const lineH = 22;
+    el.style.height = "auto";
+    const maxH = lineH * maxRows + 32; // padding buffer
+    el.style.height = `${Math.min(el.scrollHeight, maxH)}px`;
   }, [value, maxRows]);
 
   return (
@@ -30,8 +28,14 @@ export default function AutoResizeTextarea({
       rows={minRows}
       value={value}
       onChange={onChange}
+      disabled={disabled}
       className={cn(
-        "max-h-40 min-h-12 w-full resize-none bg-transparent text-sm leading-6 text-white outline-none placeholder:text-white/35",
+        "w-full resize-none bg-transparent text-sm leading-[22px] text-white/85 outline-none",
+        "placeholder:text-white/20 placeholder:transition-colors placeholder:duration-300",
+        "focus:placeholder:text-white/30",
+        "disabled:cursor-not-allowed disabled:opacity-40",
+        "transition-[height] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "scrollbar-none",
         className
       )}
       {...props}

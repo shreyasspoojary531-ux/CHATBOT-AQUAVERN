@@ -1,65 +1,99 @@
-import { motion } from "framer-motion";
-import { CheckCheck } from "lucide-react";
+import { motion } from "motion/react";
+import { CheckCheck, MessageSquareText, Search } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useState } from "react";
 
 export default function ChatList({ chats, activeChatId, onSelectChat, compact = false }) {
+  const [search, setSearch] = useState("");
+
+  const filtered = search.trim()
+    ? chats.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : chats;
+
   return (
-    <section className="glass-panel flex h-full min-h-0 flex-col rounded-lg">
-      <div className="shrink-0 border-b border-white/10 p-4">
-        <p className="text-xs uppercase tracking-[0.24em] text-white/35">Private Chats</p>
-        <div className="mt-2 flex items-end justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-white">{compact ? "Threads" : "Private Chats"}</h1>
-          <span className="rounded-md border border-white/10 px-2 py-1 text-xs text-white/45">
-            {chats.length} active
-          </span>
+    <div className="glass flex h-full min-h-0 flex-col rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="shrink-0 border-b border-white/[0.05] px-4 py-4">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-white/30">
+          <MessageSquareText className="h-3.5 w-3.5" />
+          <span>Threads</span>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <h2 className="text-lg font-semibold tracking-tight text-white">Chats</h2>
+          <span className="text-[11px] text-white/25">{chats.length} active</span>
+        </div>
+
+        {/* Search */}
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search threads..."
+            className="w-full h-9 rounded-lg border border-white/[0.05] bg-white/[0.02] pl-8 pr-3 text-xs text-white/60 placeholder:text-white/20 outline-none transition-all duration-300 focus:border-white/15 focus:bg-white/[0.04]"
+          />
         </div>
       </div>
 
-      <div className="premium-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
-        {chats.map((chat, index) => {
+      {/* Thread list */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 space-y-0.5">
+        {filtered.map((chat, i) => {
           const active = chat.id === activeChatId;
-
           return (
             <motion.button
               key={chat.id}
               type="button"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.35 }}
-              whileHover={{ y: -2 }}
+              transition={{ delay: i * 0.03, duration: 0.3 }}
               onClick={() => onSelectChat(chat)}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all duration-300",
+                "group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-all duration-200",
                 active
-                  ? "border-white/25 bg-white/[0.11] shadow-[0_18px_54px_rgba(0,0,0,0.4)]"
-                  : "border-white/8 bg-white/[0.035] hover:border-white/18 hover:bg-white/[0.07]"
+                  ? "bg-white/[0.06] border border-white/[0.06]"
+                  : "border border-transparent hover:bg-white/[0.03]"
               )}
             >
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white text-sm font-semibold text-black">
+              {/* Avatar */}
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white font-semibold text-black text-sm shadow-sm">
                 {chat.initials}
-                <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-black bg-white" />
+                <span className={cn(
+                  "absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0d0e12] shadow-sm",
+                  chat.status === "Online" ? "bg-emerald-400" : "bg-neutral-400"
+                )} />
               </div>
 
+              {/* Content */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="truncate text-sm font-semibold text-white">{chat.name}</p>
-                  <span className="text-xs text-white/40">{chat.timestamp}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium text-white">{chat.name}</p>
+                  <span className="shrink-0 text-[10px] text-white/25">{chat.timestamp}</span>
                 </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <CheckCheck className="h-3.5 w-3.5 shrink-0 text-white/35" />
-                  <p className="truncate text-sm text-white/48">{chat.lastMessage}</p>
+                <div className="mt-0.5 flex items-center gap-1">
+                  <CheckCheck className="h-3 w-3 shrink-0 text-white/20" />
+                  <p className="truncate text-xs text-white/40">{chat.lastMessage}</p>
                 </div>
               </div>
 
+              {/* Unread badge */}
               {chat.unread > 0 && (
-                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-2 text-xs font-semibold text-black">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/90 px-1.5 text-[10px] font-semibold text-black">
                   {chat.unread}
                 </span>
               )}
             </motion.button>
           );
         })}
+
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center py-16 text-center">
+            <p className="text-xs text-white/30">
+              {search ? "No threads match your search" : "No threads yet"}
+            </p>
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }
