@@ -7,34 +7,48 @@ export default function AuthInit({ children }) {
   const setSession = useAuthStore((state) => state.setSession);
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setChecking(false);
-    }).catch((err) => {
-      console.error("Error getting session:", err);
-      setChecking(false);
-    });
+    let cancelled = false;
 
-    // Listen for auth state changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setChecking(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled) return;
+        setSession(session);
+        setChecking(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setChecking(false);
+      });
 
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (cancelled) return;
+        setSession(session);
+        setChecking(false);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [setSession]);
 
   if (checking) {
     return (
-      <div className="relative flex h-full min-h-screen w-full items-center justify-center bg-[#0d0e12] text-white">
-        <div className="soft-grid pointer-events-none fixed inset-0 opacity-60" />
-        <div className="pointer-events-none fixed inset-x-0 top-0 h-96 bg-gradient-to-b from-white/[0.09] to-transparent" />
-        <div className="z-10 flex flex-col items-center gap-4">
-          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-white/10 border-t-white/60" />
-          <p className="text-[10px] uppercase tracking-[0.24em] text-white/35 animate-pulse">Securing workspace session...</p>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#0d0e12]">
+        <div className="grid-bg pointer-events-none fixed inset-0 opacity-30" />
+        <div className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-gradient-to-b from-white/[0.06] to-transparent" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-white/[0.06] border-t-white/50"
+            role="status"
+            aria-label="Loading"
+          />
+          <p className="text-[10px] uppercase tracking-[0.22em] text-white/30 animate-pulse">
+            Establishing secure session&hellip;
+          </p>
         </div>
       </div>
     );

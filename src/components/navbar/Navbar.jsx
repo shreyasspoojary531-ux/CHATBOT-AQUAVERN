@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -22,275 +22,146 @@ const links = [
   { label: "Notifications", to: "/notifications", icon: Bell },
 ];
 
-const springTransition = {
-  type: "spring",
-  stiffness: 400,
-  damping: 32,
-};
-
-const easeTransition = {
-  duration: 0.35,
-  ease: [0.16, 1, 0.3, 1],
-};
+const spring = { type: "spring", stiffness: 400, damping: 32 };
 
 export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const menuBtnRef = useRef(null);
 
   const handleLogout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Silently handle — auth is cleared regardless
-    } finally {
-      clearAuth();
-      navigate("/login", { replace: true });
-    }
+    try { await supabase.auth.signOut(); } catch { /* cleared below */ }
+    clearAuth();
+    navigate("/login", { replace: true });
   }, [clearAuth, navigate]);
 
-  const closeMobile = useCallback(() => setMobileMenuOpen(false), []);
+  const confirmLogout = useCallback(async () => {
+    setShowLogoutConfirm(false);
+    setMobileOpen(false);
+    // Brief delay so the UI settles
+    await new Promise((r) => setTimeout(r, 200));
+    handleLogout();
+  }, [handleLogout]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-black/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-black/30">
-      <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* ── Brand ── */}
-        <NavLink
-          to="/home"
-          onClick={closeMobile}
-          className="group flex items-center gap-3 shrink-0"
-        >
-          <motion.div
-            whileHover={{ rotate: -6, scale: 1.04 }}
-            transition={{ type: "spring", stiffness: 320, damping: 20 }}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.05] shadow-[0_0_24px_rgba(255,255,255,0.06)]"
-          >
-            <MessageSquareText className="h-[18px] w-[18px] text-white" />
+    <header className="sticky top-0 z-50 border-b border-white/[0.05] bg-black/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-black/30">
+      <nav className="mx-auto flex h-14 sm:h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Brand */}
+        <NavLink to="/home" onClick={() => setMobileOpen(false)} className="group flex items-center gap-3 shrink-0">
+          <motion.div whileHover={{ rotate: -6, scale: 1.04 }} transition={{ type: "spring", stiffness: 320, damping: 20 }}
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-white/[0.10] bg-white/[0.04]">
+            <MessageSquareText className="h-[16px] w-[16px] sm:h-[18px] sm:w-[18px] text-white" />
           </motion.div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold tracking-wide text-white">
-              AQUAVERN
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-white/30">
-              TECHNOLOGIES
-            </p>
+            <p className="text-sm font-semibold tracking-wide text-white">AQUAVERN</p>
+            <p className="text-[9px] uppercase tracking-[0.24em] text-white/25">TECHNOLOGIES</p>
           </div>
         </NavLink>
 
-        {/* ── Desktop Nav ── */}
-        <div className="hidden md:flex items-center gap-1 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-lg">
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-1 shadow-sm">
           {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) =>
-                cn(
-                  "relative overflow-hidden rounded-xl px-3.5 py-2 text-sm font-medium outline-none",
-                  "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  isActive
-                    ? "text-white"
-                    : "text-white/50 hover:text-white/80"
-                )
-              }
-            >
+            <NavLink key={link.to} to={link.to}
+              className={({ isActive }) => cn(
+                "relative overflow-hidden rounded-xl px-3 py-1.5 text-xs font-medium outline-none transition-all duration-300",
+                isActive ? "text-white" : "text-white/45 hover:text-white/75"
+              )}>
               {({ isActive }) => (
                 <>
-                  {isActive && (
-                    <motion.span
-                      layoutId="nav-pill"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.10] to-white/[0.03] border border-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]"
-                      transition={springTransition}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-2">
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </span>
+                  {isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/[0.04]" transition={spring} />}
+                  <span className="relative z-10 flex items-center gap-1.5"><link.icon className="h-3.5 w-3.5" />{link.label}</span>
                 </>
               )}
             </NavLink>
           ))}
         </div>
 
-        {/* ── Right side: Desktop Logout ── */}
-        <div className="hidden md:flex items-center">
-          <motion.button
-            onClick={handleLogout}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            className={cn(
-              "flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03]",
-              "px-3.5 py-2 text-xs font-medium text-white/45",
-              "transition-all duration-300",
-              "hover:border-red-500/25 hover:bg-red-500/8 hover:text-red-400",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-            )}
-          >
-            <LogOut className="h-3.5 w-3.5" />
+        {/* Right */}
+        <div className="hidden md:flex items-center gap-2">
+          <motion.button onClick={() => setShowLogoutConfirm(true)} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-[7px] text-[11px] font-medium text-white/35 transition-all duration-300 hover:border-red-500/15 hover:bg-red-500/5 hover:text-red-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15">
+            <LogOut className="h-3 w-3" />
             <span className="hidden lg:inline">Logout</span>
           </motion.button>
         </div>
 
-        {/* ── Mobile Hamburger ── */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl md:hidden",
-            "border border-white/[0.08] bg-white/[0.04]",
-            "transition-all duration-300",
-            "hover:border-white/20 hover:bg-white/[0.08]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-          )}
-        >
-          <AnimatePresence mode="wait">
-            {mobileMenuOpen ? (
-              <motion.div
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="h-4 w-4 text-white" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="menu"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Menu className="h-4 w-4 text-white" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.button>
+        {/* Mobile hamburger */}
+        <button ref={menuBtnRef} type="button" onClick={() => setMobileOpen((o) => !o)} aria-expanded={mobileOpen} aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          className="flex h-9 w-9 items-center justify-center rounded-xl md:hidden border border-white/[0.06] bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.05] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
+          {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
       </nav>
 
-      {/* ── Mobile Drawer ── */}
+      {/* Mobile drawer */}
       <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            className="fixed inset-0 top-16 z-40 md:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Backdrop */}
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={closeMobile}
-              className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-sm cursor-default"
-            />
-
-            {/* Drawer panel */}
-            <motion.aside
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className={cn(
-                "absolute right-3 top-3 w-[min(20rem,calc(100vw-1.5rem))]",
-                "rounded-2xl border border-white/[0.10] bg-[#0d0e12]/95",
-                "shadow-[0_32px_100px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]",
-                "backdrop-blur-2xl supports-[backdrop-filter]:bg-[#0d0e12]/80",
-                "overflow-hidden"
-              )}
-            >
-              {/* Decorative glow */}
-              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-500/[0.06] blur-3xl" />
-
-              {/* Header */}
-              <div className="relative border-b border-white/[0.06] px-4 py-4">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-white/35">
-                  Navigation
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  Aquavern workspace
-                </p>
+        {mobileOpen && (
+          <motion.div className="fixed inset-0 top-14 z-40 md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-sm cursor-default" />
+            <motion.aside initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: "100%", opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute right-3 top-3 w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-white/[0.08] bg-[#0d0e12]/95 backdrop-blur-2xl overflow-hidden shadow-[0_32px_100px_rgba(0,0,0,0.5)]"
+              role="dialog" aria-modal="true" aria-label="Navigation menu">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-500/[0.04] blur-3xl" />
+              <div className="relative border-b border-white/[0.04] px-4 py-3.5">
+                <p className="text-[9px] uppercase tracking-[0.22em] text-white/30">Navigation</p>
+                <p className="mt-0.5 text-sm font-semibold text-white">Aquavern workspace</p>
               </div>
-
-              {/* Links */}
               <div className="relative p-2">
                 {links.map((link, i) => (
-                  <motion.div
-                    key={link.to}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      delay: 0.04 * i,
-                      duration: 0.3,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                  >
-                    <NavLink
-                      to={link.to}
-                      onClick={closeMobile}
-                      className={({ isActive }) =>
-                        cn(
-                          "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium",
-                          "transition-all duration-300",
-                          isActive
-                            ? "text-white"
-                            : "text-white/55 hover:text-white hover:bg-white/[0.04]"
-                        )
-                      }
-                    >
+                  <motion.div key={link.to} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i, duration: 0.25 }}>
+                    <NavLink to={link.to} onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) => cn(
+                        "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                        isActive ? "text-white" : "text-white/50 hover:text-white hover:bg-white/[0.03]"
+                      )}>
                       {({ isActive }) => (
                         <>
-                          {isActive && (
-                            <motion.span
-                              layoutId="mobile-active-bg"
-                              className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] border border-white/[0.06]"
-                              transition={springTransition}
-                            />
-                          )}
-                          <span className="relative z-10 flex items-center gap-3">
-                            <link.icon className="h-4 w-4" />
-                            {link.label}
-                          </span>
+                          {isActive && <motion.span layoutId="mobile-active" className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/[0.04]" transition={spring} />}
+                          <span className="relative z-10 flex items-center gap-3"><link.icon className="h-4 w-4" />{link.label}</span>
                         </>
                       )}
                     </NavLink>
                   </motion.div>
                 ))}
-
-                {/* Divider */}
-                <div className="my-2 border-t border-white/[0.06]" />
-
-                {/* Mobile Logout */}
-                <motion.button
-                  onClick={() => {
-                    closeMobile();
-                    handleLogout();
-                  }}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: 0.04 * links.length + 0.04,
-                    duration: 0.3,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
+                <div className="my-2 border-t border-white/[0.04]" />
+                <motion.button onClick={() => { setMobileOpen(false); setShowLogoutConfirm(true); }}
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 * links.length + 0.02, duration: 0.25 }}
                   whileTap={{ scale: 0.98 }}
-                  className={cn(
-                    "flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
-                    "text-red-400/80 border border-red-500/15 bg-red-500/5",
-                    "transition-all duration-300",
-                    "hover:bg-red-500/10 hover:text-red-300"
-                  )}
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout workspace
+                  className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-red-400/70 border border-red-500/12 bg-red-500/4 hover:bg-red-500/8 hover:text-red-300 transition-all duration-200">
+                  <LogOut className="h-4 w-4" /> Logout workspace
                 </motion.button>
               </div>
             </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Logout confirmation dialog */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
+            <motion.div initial={{ opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="glass relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 shadow-[0_32px_100px_rgba(0,0,0,0.55)]"
+              role="alertdialog" aria-label="Confirm logout">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/12 bg-red-500/6 mb-4">
+                  <LogOut className="h-6 w-6 text-red-400/60" />
+                </div>
+                <h3 className="text-base font-semibold text-white">Leave workspace?</h3>
+                <p className="mt-1.5 text-sm text-white/40 leading-relaxed">You will be signed out and returned to the login screen.</p>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button variant="ghost" className="flex-1 text-xs h-10" onClick={() => setShowLogoutConfirm(false)}>Cancel</Button>
+                <Button className="flex-1 text-xs h-10 gap-2" onClick={confirmLogout}>
+                  <LogOut className="h-3.5 w-3.5" /> Logout
+                </Button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

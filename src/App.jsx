@@ -7,27 +7,33 @@ import Services from "./pages/Services";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AuthInit from "./components/auth/AuthInit";
+import ErrorBoundary from "./components/auth/ErrorBoundary";
+import { ToastProvider } from "./components/ui/Toast";
 
 export default function App() {
   return (
-    <AuthInit>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthInit>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/chatbot" element={<Chatbot />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/" element={<Navigate to="/home" replace />} />
-            </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthInit>
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/chatbot" element={<Chatbot />} />
+                  <Route path="/services" element={<Services />} />
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+                </Route>
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthInit>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
