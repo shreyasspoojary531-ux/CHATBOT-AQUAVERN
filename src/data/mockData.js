@@ -70,24 +70,28 @@ export const privateChats = [
 export const notifications = [
   {
     id: 1,
+    type: "success",
     title: "Workspace sync complete",
     body: "Private chat indexes refreshed across internal rooms.",
     time: "2m ago",
   },
   {
     id: 2,
+    type: "info",
     title: "Policy update queued",
     body: "New moderation copy is pending review for Aquavern.",
     time: "18m ago",
   },
   {
     id: 3,
+    type: "info",
     title: "Chatbot UI preview",
     body: "Default AI response flow is ready for stakeholder testing.",
     time: "41m ago",
   },
   {
     id: 4,
+    type: "warning",
     title: "Quiet hours active",
     body: "Non-critical notifications are being bundled.",
     time: "1h ago",
